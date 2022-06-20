@@ -1,4 +1,5 @@
 const express = require('express');
+const crypto = require('crypto');
 
 const loginRoutes = express.Router();
 
@@ -23,11 +24,7 @@ const validateData = (req, res, next) => {
 };
 
 const generateToken = (_req, res) => {
-  let token = '';
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  [...Array(16)].forEach(() => {
-    token += characters.charAt(Math.floor(Math.random() * characters.length));
-  });
+  const token = crypto.randomBytes(8).toString('hex');
   res.status(200).json({ token });
 };
 
