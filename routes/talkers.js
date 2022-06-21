@@ -16,14 +16,21 @@ async function getAllTalkers(req, res, next) {
   }
 }
 
-async function findTalker(req, res, next) {
+async function findTalker(req, _res, next) {
   const { id } = req.params;
   const talkers = await readTalkersFile();
   const selectedTalker = talkers.find((talker) => talker.id === +id);
   if (!selectedTalker) {
     return next({ message: 'Pessoa palestrante não encontrada', status: 404 });
   }
-  res.status(200).json(selectedTalker);
+
+  req.selectedTalker = selectedTalker;
+
+  next();
+}
+
+function returnSelectedTalker(req, res) {
+  res.status(200).json(req.selectedTalker);
 }
 
 function verifyAuthorization(req, res, next) {
@@ -56,23 +63,54 @@ function verifyTalkerFields(req, res, next) {
     return next({ message: 'O campo "rate" deve ser um inteiro de 1 à 5', status: 400 });
   }
 
+  req.selectedTalker = { name, age, talk };
+
+  next();
+}
+
+function defineTalkerMandatoryFields(req, _res, next) {
+  const { name, age, talk } = req.body;
+
+  // Recebi ajuda de Danillo Gonçalves, Lais Namatela e Leo Araujo
+  // Minha aplicação estava dando erro de "não é possível ler as propriedades de undefined"
+  // Porém, essa mensagem de erro não aparecia no console, nem no retorno da API, o que dificultou a identificação
+
+  req.mandatoryFields = {
+    name,
+    age,
+    talk,
+    watchedAt: talk && talk.watchedAt,
+    rate: talk && talk.rate,
+  };
   next();
 }
 
 async function registerTalker(req, res, next) {
-  const { name, age, talk } = req.body;
-
-  const currTalker = {
-    name,
-    age,
-    talk,
-  };
+  const { selectedTalker } = req;
 
   try {
     const talkers = await readTalkersFile();
-    currTalker.id = talkers[talkers.length - 1].id + 1;
-    writeTalkersFile([...talkers, currTalker]);  
-    res.status(201).json(currTalker);
+    selectedTalker.id = talkers[talkers.length - 1].id + 1;
+    writeTalkersFile([...talkers, selectedTalker]);  
+    res.status(201).json(selectedTalker);
+  } catch ({ message }) {
+    next({ message, status: 500 });
+  }
+}
+
+async function editTalker(req, res, next) {
+  const { name, age, talk } = req.body;
+  const { id } = req.params;
+
+  const selectedTalker = { id, name, age, talk };
+
+  try {
+    const talkers = await readTalkersFile();
+    const index = talkers.findIndex((talker) => talker.id === id);
+    talkers[index] = selectedTalker;
+
+    writeTalkersFile(talkers);  
+    res.status(201).json(selectedTalker);
   } catch ({ message }) {
     next({ message, status: 500 });
   }
@@ -86,32 +124,30 @@ talkerRoutes
   )
   .post(
     verifyAuthorization,
-    (req, _res, next) => {
-      const { name, age, talk } = req.body;
-
-      // Recebi ajuda de Danillo Gonçalves, Lais Namatela e Leo Araujo
-      // Minha aplicação estava dando erro de "não é possível ler as propriedades de undefined"
-      // Porém, essa mensagem de erro não aparecia no console, nem no retorno da API, o que dificultou a identificação
-
-      req.mandatoryFields = {
-        name,
-        age,
-        talk,
-        watchedAt: talk && talk.watchedAt,
-        rate: talk && talk.rate,
-      };
-      next();
-    },
+    defineTalkerMandatoryFields,
     validateMandatoryFields,
     verifyTalkerFields,
     registerTalker,
     errorHandler,
   );
 
-talkerRoutes.get(
-  '/:id',
-  findTalker,
-  errorHandler,
-);
+talkerRoutes
+  .route(
+    '/:id',
+  )
+  .get(
+    findTalker,
+    returnSelectedTalker,
+    errorHandler,
+  )
+  .put(
+    findTalker,
+    verifyAuthorization,
+    defineTalkerMandatoryFields,
+    validateMandatoryFields,
+    verifyTalkerFields,
+    editTalker,
+    errorHandler,
+  );
 
 module.exports = talkerRoutes;
