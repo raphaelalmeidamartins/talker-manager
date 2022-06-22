@@ -125,7 +125,7 @@ function deleteTalker(req, res, next) {
     talkers.splice(index, 1);
 
     writeTalkersFile(talkers);  
-    res.status(204);
+    res.status(204).json();
   } catch ({ message }) {
     next({ message, status: 500 });
   }
