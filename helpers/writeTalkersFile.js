@@ -1,7 +1,7 @@
-const fs = require('fs').promises;
+const fs = require('fs');
 
-async function writeTalkersFile(updatedTalkers) {
-  fs.writeFile('./talker.json', JSON.stringify(updatedTalkers), { encoding: 'utf8' });
+function writeTalkersFile(updatedTalkers) {
+  fs.writeFileSync('./talker.json', JSON.stringify(updatedTalkers), { encoding: 'utf8' });
 }
 
 module.exports = writeTalkersFile;

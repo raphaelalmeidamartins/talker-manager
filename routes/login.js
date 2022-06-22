@@ -19,7 +19,7 @@ function validateLoginData(req, res, next) {
   next();
 }
 
-function generateToken(req, res) {
+function generateToken(_req, res) {
   const token = crypto.randomBytes(8).toString('hex');
   res.status(200).json({ token });
 }

@@ -7,18 +7,18 @@ const validateDateFormat = require('../helpers/validateDateFormat');
 
 const talkerRoutes = express.Router();
 
-async function getAllTalkers(req, res, next) {
+function getAllTalkers(req, res, next) {
   try {
-    const talkers = await readTalkersFile();
+    const talkers = readTalkersFile();
     res.status(200).json(talkers);    
   } catch ({ message }) {
     next({ message, status: 500 });
   }
 }
 
-async function findTalker(req, _res, next) {
+function findTalker(req, _res, next) {
   const { id } = req.params;
-  const talkers = await readTalkersFile();
+  const talkers = readTalkersFile();
   const selectedTalker = talkers.find((talker) => talker.id === +id);
   if (!selectedTalker) {
     return next({ message: 'Pessoa palestrante não encontrada', status: 404 });
@@ -85,11 +85,11 @@ function defineTalkerMandatoryFields(req, _res, next) {
   next();
 }
 
-async function registerTalker(req, res, next) {
+function registerTalker(req, res, next) {
   const { selectedTalker } = req;
 
   try {
-    const talkers = await readTalkersFile();
+    const talkers = readTalkersFile();
     selectedTalker.id = talkers[talkers.length - 1].id + 1;
     writeTalkersFile([...talkers, selectedTalker]);  
     res.status(201).json(selectedTalker);
@@ -98,19 +98,19 @@ async function registerTalker(req, res, next) {
   }
 }
 
-async function editTalker(req, res, next) {
+function editTalker(req, res, next) {
   const { name, age, talk } = req.body;
   const { id } = req.params;
 
-  const selectedTalker = { id, name, age, talk };
+  const selectedTalker = { id: +id, name, age, talk };
 
   try {
-    const talkers = await readTalkersFile();
-    const index = talkers.findIndex((talker) => talker.id === id);
+    const talkers = readTalkersFile();
+    const index = talkers.findIndex((talker) => talker.id === +id);
     talkers[index] = selectedTalker;
 
     writeTalkersFile(talkers);  
-    res.status(201).json(selectedTalker);
+    res.status(200).json(selectedTalker);
   } catch ({ message }) {
     next({ message, status: 500 });
   }
@@ -141,8 +141,8 @@ talkerRoutes
     errorHandler,
   )
   .put(
-    findTalker,
     verifyAuthorization,
+    findTalker,
     defineTalkerMandatoryFields,
     validateMandatoryFields,
     verifyTalkerFields,
