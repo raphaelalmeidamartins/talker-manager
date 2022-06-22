@@ -116,6 +116,21 @@ function editTalker(req, res, next) {
   }
 }
 
+function deleteTalker(req, res, next) {
+  const { id } = req.params;
+
+  try {
+    const talkers = readTalkersFile();
+    const index = talkers.findIndex((talker) => talker.id === +id);
+    talkers.splice(index, 1);
+
+    writeTalkersFile(talkers);  
+    res.status(204);
+  } catch ({ message }) {
+    next({ message, status: 500 });
+  }
+}
+
 talkerRoutes
   .route('/')
   .get(
@@ -147,6 +162,12 @@ talkerRoutes
     validateMandatoryFields,
     verifyTalkerFields,
     editTalker,
+    errorHandler,
+  )
+  .delete(
+    verifyAuthorization,
+    findTalker,
+    deleteTalker,
     errorHandler,
   );
 
