@@ -16,6 +16,17 @@ function getAllTalkers(req, res, next) {
   }
 }
 
+function searchTalkers(req, res) {
+  const { q: searchTerm } = req.query;
+  const talkers = readTalkersFile();
+
+  if (!searchTerm) {
+    return res.status(200).json(talkers);
+  }
+
+  res.status(200).json(talkers.filter(({ name }) => name.includes(searchTerm)));
+}
+
 function findTalker(req, _res, next) {
   const { id } = req.params;
   const talkers = readTalkersFile();
@@ -170,5 +181,11 @@ talkerRoutes
     deleteTalker,
     errorHandler,
   );
+
+talkerRoutes.get(
+  '/search',
+  verifyAuthorization,
+  searchTalkers,
+);
 
 module.exports = talkerRoutes;
