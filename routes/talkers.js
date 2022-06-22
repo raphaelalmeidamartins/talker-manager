@@ -161,6 +161,7 @@ talkerRoutes.get(
   '/search',
   verifyAuthorization,
   searchTalkers,
+  errorHandler,
 );
 
 talkerRoutes
