@@ -157,6 +157,12 @@ talkerRoutes
     errorHandler,
   );
 
+talkerRoutes.get(
+  '/search',
+  verifyAuthorization,
+  searchTalkers,
+);
+
 talkerRoutes
   .route(
     '/:id',
@@ -181,11 +187,5 @@ talkerRoutes
     deleteTalker,
     errorHandler,
   );
-
-talkerRoutes.get(
-  '/search',
-  verifyAuthorization,
-  searchTalkers,
-);
 
 module.exports = talkerRoutes;
